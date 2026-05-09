@@ -1,0 +1,2857 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>SRI // Tests</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap');
+  :root {
+    --bg:#080b0f; --bg2:#0e1319; --bg3:#151c24; --panel:#101722; --border:#243142; --border2:#304057;
+    --accent:#00d4ff; --accent2:#0098d0; --green:#00ff88; --red:#ff4a69; --yellow:#ffd24a;
+    --text:#d6e6f6; --text2:#94adc3; --text3:#5f7890; --shadow:0 18px 50px rgba(0,0,0,.35);
+    --font:'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  * { box-sizing:border-box; }
+  html { -webkit-text-size-adjust:100%; scroll-behavior:smooth; }
+  body { margin:0; min-height:100svh; background:radial-gradient(circle at top left, rgba(0,212,255,.08), transparent 34rem), var(--bg); color:var(--text); font-family:var(--font); overflow-x:hidden; }
+  body::before { content:''; position:fixed; inset:0; pointer-events:none; z-index:1000; background:repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,212,255,.012) 2px, rgba(0,212,255,.012) 4px); }
+  button, input { font-family:var(--font); }
+  .header { position:sticky; top:0; z-index:50; display:flex; justify-content:space-between; gap:18px; align-items:center; padding:22px max(22px, env(safe-area-inset-left)) 20px; padding-right:max(22px, env(safe-area-inset-right)); background:rgba(14,19,25,.9); backdrop-filter:blur(14px); border-bottom:1px solid var(--border); }
+  .logo { display:flex; align-items:baseline; gap:10px; min-width:0; } .logo-main { color:var(--accent); font-weight:800; letter-spacing:4px; font-size:22px; } .logo-sep { color:var(--border2); } .logo-sub { color:var(--text3); font-size:12px; letter-spacing:2px; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .header-meta { text-align:right; color:var(--text3); font-size:11px; line-height:1.5; } .header-meta span { display:block; color:var(--text2); }
+  #screen-home { max-width:1100px; margin:0 auto; padding:52px 28px 80px; }
+  .home-title { color:var(--text3); font-size:11px; letter-spacing:4px; text-transform:uppercase; margin:0 0 8px; } .home-heading { font-size:clamp(26px,4vw,42px); margin:0 0 8px; } .home-heading span { color:var(--accent); } .home-desc { color:var(--text3); margin:0 0 34px; font-size:13px; line-height:1.7; }
+  .stats-strip { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:0 0 22px; } .mini-stat { border:1px solid var(--border); background:rgba(16,23,34,.72); border-radius:14px; padding:14px; } .mini-stat b { display:block; color:var(--accent); font-size:22px; } .mini-stat span { color:var(--text3); font-size:10px; letter-spacing:1.4px; text-transform:uppercase; }
+  .modules-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:14px; }
+  .module-card { border:1px solid var(--border); background:linear-gradient(180deg, rgba(21,28,36,.9), rgba(14,19,25,.95)); border-radius:18px; padding:20px; cursor:pointer; transition:.18s ease; box-shadow:var(--shadow); min-height:132px; } .module-card:hover { transform:translateY(-2px); border-color:var(--accent2); }
+  .module-id { color:var(--accent); font-size:10px; letter-spacing:2.5px; text-transform:uppercase; margin-bottom:8px; } .module-name { font-weight:700; line-height:1.45; margin-bottom:14px; } .module-meta { color:var(--text3); font-size:11px; display:flex; gap:16px; } .module-meta i { color:var(--text2); font-style:normal; }
+  .all-modules-btn { width:100%; margin-top:14px; min-height:54px; border:1px solid var(--accent2); border-radius:16px; background:rgba(0,212,255,.06); color:var(--accent); font-weight:800; letter-spacing:2px; text-transform:uppercase; cursor:pointer; }
+  #screen-quiz, #screen-results { display:none; }
+  .quiz-topbar { position:sticky; top:65px; z-index:40; display:grid; grid-template-columns:auto 1fr auto auto; align-items:center; gap:14px; padding:12px 28px; background:rgba(14,19,25,.92); backdrop-filter:blur(14px); border-bottom:1px solid var(--border); }
+  .quiz-module-label { color:var(--accent); font-size:10px; letter-spacing:2px; text-transform:uppercase; white-space:nowrap; } .progress-bar-wrap { height:4px; background:var(--border); border-radius:10px; overflow:hidden; } .progress-bar-fill { width:0%; height:100%; background:linear-gradient(90deg,var(--accent2),var(--accent)); transition:width .25s ease; } .quiz-score-badge { color:var(--text2); font-size:11px; white-space:nowrap; } .btn-exit-quiz { min-height:36px; border:1px solid var(--border2); border-radius:10px; background:transparent; color:var(--text2); padding:0 12px; cursor:pointer; }
+  .question-area { max-width:880px; margin:0 auto; padding:42px 28px 120px; } .q-counter { color:var(--text3); font-size:10px; letter-spacing:3px; text-transform:uppercase; margin:0 0 10px; } .q-type-badge { display:inline-flex; margin-bottom:18px; padding:4px 9px; border:1px solid var(--accent2); border-radius:8px; color:var(--accent); font-size:9px; letter-spacing:2px; text-transform:uppercase; } .type-multi { color:var(--yellow); border-color:rgba(255,210,74,.5); } .type-tf { color:var(--green); border-color:rgba(0,255,136,.45); } .type-fill { color:#ff93cf; border-color:#b64f8b; }
+  .q-text { font-size:clamp(16px,2.1vw,20px); line-height:1.7; margin:0 0 28px; }
+  .options-list { list-style:none; padding:0; margin:0; display:grid; gap:11px; } .option-item { display:grid; grid-template-columns:28px 1fr; gap:10px; align-items:start; min-height:52px; padding:15px 16px; border:1px solid var(--border); border-radius:14px; background:rgba(16,23,34,.86); color:var(--text); cursor:pointer; line-height:1.45; font-size:14px; } .option-item:hover:not(.disabled), .option-item.selected { border-color:var(--accent); background:rgba(0,212,255,.08); } .option-letter { color:var(--text3); font-weight:800; } .option-item.correct, .option-item.show-correct { border-color:var(--green); color:var(--green); background:rgba(0,255,136,.08); } .option-item.incorrect { border-color:var(--red); color:var(--red); background:rgba(255,74,105,.08); text-decoration:line-through; } .option-item.disabled { cursor:default; }
+  .fill-input { width:100%; max-width:560px; min-height:54px; border:1px solid var(--border2); border-radius:14px; background:var(--panel); color:var(--text); padding:0 16px; font-size:16px; outline:none; } .fill-input:focus { border-color:var(--accent); }
+  .feedback-box { display:none; margin-top:22px; padding:16px; border-radius:14px; border-left:4px solid; line-height:1.55; font-size:13px; } .correct-fb { border-color:var(--green); background:rgba(0,255,136,.08); color:var(--green); } .incorrect-fb { border-color:var(--red); background:rgba(255,74,105,.08); color:#ff9aaa; } .feedback-label { display:block; margin-bottom:6px; font-weight:800; letter-spacing:2px; font-size:10px; text-transform:uppercase; }
+  .action-row { display:flex; gap:12px; flex-wrap:wrap; margin-top:28px; } .btn-primary, .btn-secondary { min-height:48px; border-radius:13px; padding:0 22px; letter-spacing:2px; text-transform:uppercase; font-size:11px; cursor:pointer; } .btn-primary { background:var(--accent); color:#001018; border:0; font-weight:900; } .btn-secondary { background:transparent; color:var(--text2); border:1px solid var(--border2); }
+  #screen-results { max-width:900px; margin:0 auto; padding:54px 28px 80px; } .results-header { text-align:center; margin-bottom:34px; } .results-label { color:var(--text3); letter-spacing:4px; font-size:10px; text-transform:uppercase; } .results-score-big { font-size:clamp(52px,10vw,92px); font-weight:900; color:var(--accent); } .results-module-name { color:var(--text3); } .results-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:30px; } .stat-box { border:1px solid var(--border); border-radius:16px; background:var(--panel); padding:18px; text-align:center; } .stat-val { color:var(--accent); font-size:28px; font-weight:900; } .stat-lbl { color:var(--text3); font-size:10px; letter-spacing:1.5px; text-transform:uppercase; } .review-title { color:var(--red); font-size:11px; letter-spacing:3px; text-transform:uppercase; margin:26px 0 14px; } .review-item { border:1px solid var(--border); border-left:4px solid var(--red); background:var(--panel); border-radius:14px; padding:14px; margin-bottom:10px; } .review-q { margin:0 0 10px; line-height:1.55; } .review-answer-row { display:flex; gap:8px; margin-top:6px; font-size:12px; } .review-lbl { color:var(--text3); min-width:88px; } .review-your { color:var(--red); } .review-correct { color:var(--green); } .results-actions { display:flex; gap:12px; flex-wrap:wrap; }
+  @media (min-width: 900px) { .question-area { padding-top:58px; } .option-item { font-size:15px; } }
+  @media (max-width: 700px) {
+    .header { padding-top:max(16px, env(safe-area-inset-top)); } .logo-sub,.header-meta { display:none; } #screen-home { padding:34px 16px 90px; } .stats-strip { grid-template-columns:1fr 1fr 1fr; gap:8px; } .mini-stat { padding:12px 10px; } .mini-stat b { font-size:18px; } .modules-grid { grid-template-columns:1fr; }
+    .quiz-topbar { top:58px; grid-template-columns:1fr auto; gap:10px; padding:10px 14px; } .quiz-module-label { overflow:hidden; text-overflow:ellipsis; } .progress-bar-wrap { grid-column:1 / -1; order:3; } .btn-exit-quiz { min-height:34px; } .question-area { padding:28px 16px calc(112px + env(safe-area-inset-bottom)); } .q-text { font-size:16px; } .option-item { grid-template-columns:24px 1fr; min-height:56px; padding:14px; font-size:14px; border-radius:14px; }
+    .action-row { position:fixed; left:0; right:0; bottom:0; z-index:70; padding:12px 14px max(12px, env(safe-area-inset-bottom)); background:rgba(8,11,15,.94); border-top:1px solid var(--border); backdrop-filter:blur(14px); } .btn-primary,.btn-secondary { flex:1; min-width:0; padding:0 10px; min-height:52px; } .feedback-box { margin-bottom:14px; } #screen-results { padding:34px 16px 90px; } .results-stats { gap:8px; } .stat-box { padding:14px 8px; } .results-actions .btn-primary,.results-actions .btn-secondary { flex:1 1 100%; }
+  }
+</style>
+</head>
+<body>
+<header class="header"><div class="logo"><span class="logo-main">SRI</span><span class="logo-sep">//</span><span class="logo-sub">Tests de autoevaluación</span></div><div class="header-meta">Servicios en Red<span id="hdr-info">Banco final</span></div></header>
+<main id="screen-home"><p class="home-title">Autoevaluación</p><h1 class="home-heading">Servicios en <span>Red</span></h1><p class="home-desc">// Banco normalizado, corregido y deduplicado. Optimizado para ordenador e iPhone 14.</p><div class="stats-strip"><div class="mini-stat"><b id="total-q">0</b><span>Preguntas</span></div><div class="mini-stat"><b id="total-m">7</b><span>Módulos</span></div><div class="mini-stat"><b>20</b><span>Test global</span></div></div><div class="modules-grid" id="modules-grid"></div><button class="all-modules-btn" onclick="startQuiz('ALL')">▶ &nbsp; Test global aleatorio</button></main>
+<section id="screen-quiz"><div class="quiz-topbar"><span class="quiz-module-label" id="quiz-module-label">—</span><div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-fill"></div></div><span class="quiz-score-badge" id="quiz-score-badge">0 / 0</span><button class="btn-exit-quiz" onclick="exitQuiz()">Salir</button></div><div class="question-area"><p class="q-counter" id="q-counter"></p><span class="q-type-badge" id="q-type-badge"></span><p class="q-text" id="q-text"></p><ul class="options-list" id="options-list"></ul><div class="fill-wrap" id="fill-wrap" style="display:none"><input type="text" class="fill-input" id="fill-input" placeholder="Escribe tu respuesta..." autocomplete="off" autocapitalize="none" /></div><div class="feedback-box" id="feedback-box"><span class="feedback-label" id="feedback-label"></span><span id="feedback-text"></span></div><div class="action-row"><button class="btn-primary" id="btn-confirm" onclick="confirmAnswer()">Confirmar</button><button class="btn-primary" id="btn-next" onclick="nextQuestion()" style="display:none">Siguiente</button><button class="btn-secondary" id="btn-skip" onclick="skipQuestion()">Omitir</button></div></div></section>
+<section id="screen-results"><div class="results-header"><p class="results-label">Resultado final</p><div class="results-score-big" id="res-score-big">—</div><p class="results-module-name" id="res-module-name">—</p></div><div class="results-stats"><div class="stat-box"><div class="stat-val" id="res-correct">0</div><div class="stat-lbl">Correctas</div></div><div class="stat-box"><div class="stat-val" id="res-incorrect" style="color:var(--red)">0</div><div class="stat-lbl">Incorrectas</div></div><div class="stat-box"><div class="stat-val" id="res-total">0</div><div class="stat-lbl">Total</div></div></div><div class="review-section" id="review-section"></div><div class="results-actions"><button class="btn-primary" onclick="repeatQuiz()">Repetir</button><button class="btn-primary" id="btn-review-incorrect" onclick="retryIncorrect()" style="display:none">Repasar fallos</button><button class="btn-secondary" onclick="goHome()">Módulos</button></div></section>
+<script>
+const MODULES = [
+  {
+    "id": "SRI01",
+    "name": "DHCP — Configuración dinámica de red",
+    "questions": [
+      {
+        "type": "single",
+        "text": "¿Qué puerto del servidor DHCP se usa para comunicarse con los clientes?",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: UDP 67",
+        "options": [
+          "UDP 67",
+          "UDP 68",
+          "TCP 67",
+          "TCP 68"
+        ]
+      },
+      {
+        "type": "single",
+        "text": "¿Qué ocurre al ejecutar en Linux el comando ifup eth0?",
+        "correct": [
+          3
+        ],
+        "explanation": "Respuesta correcta: Se activa el adaptador eth0.",
+        "options": [
+          "Se solicita la renovación de la concesión para el adaptador eth0.",
+          "Se solicita una nueva concesión DHCP para el adaptador eth0.",
+          "Se desactiva el adaptador eth0.",
+          "Se activa el adaptador eth0."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Para detener el servicio DHCP en sistemas Windows, se debe ejecutar el comando:",
+        "correct": [
+          3
+        ],
+        "explanation": "Respuesta correcta: NET STOP dhcp",
+        "options": [
+          "IFDOWN",
+          "SERVICE DHCP STOP",
+          "NET DHCP STOP",
+          "NET STOP dhcp"
+        ]
+      },
+      {
+        "type": "single",
+        "text": "En sistemas Windows para que un cliente DHCP dé por liberada la concesión de una IP que ha recibido, se usa el comando:",
+        "correct": [
+          2
+        ],
+        "explanation": "Respuesta correcta: ipconfig /release",
+        "options": [
+          "ipconfig /cancel",
+          "ipconfig /renew",
+          "ipconfig /release",
+          "ipconfig /deny"
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Un agente relay sirve para:",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Que los clientes DHCP de una red reciban la configuración de red desde un servidor DHCP situado en otra red.",
+        "options": [
+          "Que los clientes DHCP de una red reciban la configuración de red desde un servidor DHCP situado en otra red.",
+          "Que los clientes de configuración automática configuren automáticamente sus parámetros de red sin necesidad de un servidor DHCP.",
+          "Que los clientes DHCP retransmitan su dirección IP a todos los ordenadores para que éstos la conozcan.",
+          "Que un cliente DHCP pueda acceder a Internet sin tener establecida una puerta de enlace."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "En sistemas Debian/Ubuntu se puede solicitar la renovación de una concesión DHCP con el comando:",
+        "correct": [
+          3
+        ],
+        "explanation": "Respuesta correcta: dhclient",
+        "options": [
+          "ifconfig /renew",
+          "ipconfig /renew",
+          "ifconfig /release",
+          "dhclient"
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Un cliente DHCP envía un mensaje DHCP para buscar en la red algún servidor DHCP que le pueda ofrecer una concesión DHCP, el mensaje que envía se llama _____.",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: DHCP_DISCOVER",
+        "options": [
+          "DHCP_DISCOVER",
+          "DHCPDISCOVER"
+        ]
+      },
+      {
+        "type": "single",
+        "text": "En el archivo de configuración dhcpd.conf se ha establecido globalmente que el tiempo de concesión por defecto es de 2 horas. Se ha hecho una declaración subnet y dentro de ella se ha establecido que el tiempo de concesión para los clientes de la subnet es de 3 horas. A su vez dentro de la subnet se ha hecho una reserva para un ordenador en la que se establece que el tiempo de concesión en esa reserva sea de 4 horas. El tiempo de concesión que se asignará al cliente de la reserva será:",
+        "correct": [
+          3
+        ],
+        "explanation": "Respuesta correcta: De 4 horas porque prevalece lo que se establece a nivel más local.",
+        "options": [
+          "De 2 horas porque en estos casos se asigna el tiempo menor.",
+          "De 2 horas porque prevalece el tiempo que se asigna globalmente.",
+          "De 3 horas porque siempre prevalece lo que se asigna en las declaraciones subnet.",
+          "De 4 horas porque prevalece lo que se establece a nivel más local."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "En la herramienta administrativa de administración y configuración del servicio DHCP en Windows Server, un rango de direcciones IP se debe definir dentro de:",
+        "correct": [
+          2
+        ],
+        "explanation": "Respuesta correcta: Un ámbito.",
+        "options": [
+          "Una reserva.",
+          "Una subred.",
+          "Un ámbito.",
+          "Un grupo."
+        ]
+      },
+      {
+        "type": "tf",
+        "text": "En sistemas Linux el archivo dhcpd.leases almacena información sobre todas las concesiones dadas por el servidor DHCP desde que se inició por última vez el servidor. ¿Verdadero o Falso?",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Falso",
+        "options": [
+          "Verdadero",
+          "Falso"
+        ]
+      },
+      {
+        "type": "single",
+        "text": "En el servidor DHCP de Linux, el parámetro relativo a la puerta de enlace que se va a enviar a los clientes es:",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Option routers.",
+        "options": [
+          "Option routers.",
+          "Option Gateway.",
+          "Gateway server.",
+          "Option Forwarders."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "En un proceso normal de solicitud y asignación de una IP en un cliente DHCP desde un servidor, se transmiten mensajes DHCP en este orden:",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: DHCP_DISCOVER, DHCP_OFFER, DHCP_REQUEST, DHCP_ACK.",
+        "options": [
+          "DHCP_DISCOVER, DHCP_REQUEST, DHCP_OFFER, DHCP_ACK.",
+          "DHCP_DISCOVER, DHCP_OFFER, DHCP_REQUEST, DHCP_ACK.",
+          "DHCP_OFFER, DHCP_DISCOVER, DHCP_REQUEST, DHCP_ACCEPT.",
+          "DHCP_OFFER, DHCP_REQUEST, DHCP_DISCOVER, DHCP_ACCEPT."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Un cliente DHCP debe iniciar el proceso de renovación de la concesión cuando:",
+        "correct": [
+          3
+        ],
+        "explanation": "Respuesta correcta: Se ha agotado la mitad del tiempo de concesión asignado.",
+        "options": [
+          "Ha finalizado la concesión anterior.",
+          "Se ha agotado el tiempo de concesión por defecto.",
+          "Se ha agotado la mitad del tiempo establecido en max-lease-time.",
+          "Se ha agotado la mitad del tiempo de concesión asignado."
+        ]
+      },
+      {
+        "type": "tf",
+        "text": "En una red hay dos servidores DHCP asignando dinámicamente los mismos rangos de direcciones IP y el resto de ordenadores son clientes DHCP. Aunque los dos servidores asignen el mismo conjunto de direcciones, nunca se producirán conflictos de IP en la red. ¿Verdadero o Falso?",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Falso",
+        "options": [
+          "Verdadero",
+          "Falso"
+        ]
+      },
+      {
+        "type": "fill",
+        "text": "El parámetro del archivo de configuración dhcpd.conf que sirve para establecer el tiempo de concesión que se asignará por defecto a los clientes DHCP se define con el nombre",
+        "correct": [
+          "default-lease-time"
+        ],
+        "explanation": "Respuesta correcta: default-lease-time",
+        "options": []
+      },
+      {
+        "type": "single",
+        "text": "Cuando un cliente DHCP solicita la renovación de una concesión DHCP, el primer mensaje que envía es:",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: DHCP_REQUEST",
+        "options": [
+          "DHCP_DISCOVER",
+          "DHCP_REQUEST",
+          "DHCP_RELEASE",
+          "DHCP_OFFER"
+        ]
+      },
+      {
+        "type": "single",
+        "text": "En el archivo de configuración dhcpd.conf se realiza una reserva de una IP para un ordenador concreto mediante una declaración:",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: host",
+        "options": [
+          "host",
+          "option hostname",
+          "fixed-address",
+          "shared-network"
+        ]
+      },
+      {
+        "type": "fill",
+        "text": "En la herramienta administrativa de administración y configuración del servicio DHCP en Windows Server, cuando se quiere que algunas direcciones IP del rango no se asignen a ningún cliente, hay que realizar una",
+        "correct": [
+          "Exclusiones"
+        ],
+        "explanation": "Respuesta correcta: Exclusiones",
+        "options": []
+      },
+      {
+        "type": "single",
+        "text": "El paquete para instalar el servidor DHCP de ISC en sistemas Debian/Ubuntu se llama:",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: dhcpd-server.",
+        "options": [
+          "dhcpd-server.",
+          "dhcp.",
+          "dhcpd.",
+          "dhcp3-server."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Un adaptador de red tiene IP 170.16.36.1 y máscara 255.255.0.0. En esa IP, ¿cuál es el identificador del host o del adaptador dentro de la red?",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: 36.1",
+        "options": [
+          "170.16",
+          "36.1",
+          "170.16.36",
+          "1"
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Un ordenador de la red tiene configuración automática de parámetros de red, recibe siempre la misma IP y ningún otro ordenador puede recibir esa IP. Para ese ordenador se dice que el servidor realiza un modo de asignación:",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Manual.",
+        "options": [
+          "Fijo.",
+          "Manual.",
+          "Automático.",
+          "Dinámico."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Para obtener en sistemas Windows las direcciones IP, máscaras y otros parámetros de red de los adaptadores de red del equipo, se usa el comando:",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: ipconfig",
+        "options": [
+          "ipconfig",
+          "netsh ip",
+          "ifconfig",
+          "net ip"
+        ]
+      },
+      {
+        "type": "tf",
+        "text": "El comando de la interfaz de Linux que sirve para iniciar una sesión con un servidor es open.",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Verdadero",
+        "options": [
+          "Verdadero",
+          "Falso"
+        ]
+      },
+      {
+        "type": "single",
+        "text": "¿Cuál de los siguientes comandos para la interfaz de usuario del comando de Linux permite cerrar una conexión con un servidor sin cerrar la interfaz ?",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: close",
+        "options": [
+          "close",
+          "exit",
+          "quit",
+          "bye"
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Una lista en la que solo puede enviar mensajes el propietario de estas listas y/o los considerados administradores es una lista:",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Cerrada.",
+        "options": [
+          "Privada.",
+          "Cerrada.",
+          "Exclusiva.",
+          "Moderada."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "¿Se pueden utilizar imágenes con formatos distintos?",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Ninguna respuesta es correcta.",
+        "options": [
+          "No, deben tener un mismo formato las imágenes.",
+          "Ninguna respuesta es correcta.",
+          "Sí, vale cualquier formato mientras mantenga el marco igual.",
+          "Sí, cualquier formato vale."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "SRI02",
+    "name": "DNS — Sistema de nombres de dominio",
+    "questions": [
+      {
+        "type": "single",
+        "text": "Para especificar en el archivo de configuración dhcpd.conf las IP de los servidores DNS que se enviarán a los clientes DHCP, se utiliza la directiva:",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: option domain-name-servers",
+        "options": [
+          "option DNS-servers",
+          "option domain-name-servers",
+          "option domain-name",
+          "option ip-DNS-servers"
+        ]
+      },
+      {
+        "type": "fill",
+        "text": "Cuando a un ordenador servidor DHCP integrado en un dominio controlado por un controlador de dominio Windows Server le está permitido asignar parámetros de red, se dice que el servidor DHCP es un servidor de red:",
+        "correct": [
+          "autorizado"
+        ],
+        "explanation": "Respuesta correcta: autorizado",
+        "options": []
+      },
+      {
+        "type": "single",
+        "text": "Cuando tenemos en nuestra red un servidor DNS que tienen activado DDNS, la actualización de la zona cuando un equipo de la red recibe por DHCP una nueva IP es solicitada por:",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: El servidor DHCP.",
+        "options": [
+          "El cliente DHCP.",
+          "El servidor DHCP.",
+          "El servidor DNS.",
+          "El cliente DNS del equipo que recibió la IP."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Para detener el servicio DHCP en sistemas Debian/Ubuntu se debe ejecutar el comando:",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: sudo /etc/init.d/dhcp3-server stop",
+        "options": [
+          "sudo /etc/init.d/dhcp3-server stop",
+          "/etc/init.d/dhcp3-server",
+          "sudo service DNS-server start",
+          "service dhcp3-server stop"
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Un cliente DHCP cuando inicia el proceso de configuración envía un mensaje DHCP:",
+        "correct": [
+          2
+        ],
+        "explanation": "Respuesta correcta: A todos los equipos de la red.",
+        "options": [
+          "A los servidores DNS para que estos las reenvíen al servidor DHCP.",
+          "A la dirección IP de uno de los servidores DHCP de la red.",
+          "A todos los equipos de la red.",
+          "A las direcciones IP que tiene configuradas como direcciones de servidores DHCP."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "En la declaración de una reserva DHCP en el archivo dhcpd.conf, para qué se pueda identificar al cliente se debe especificar su:",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Dirección física.",
+        "options": [
+          "Dirección física.",
+          "Nombre DNS.",
+          "Dirección IP.",
+          "Nombre de equipo."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Un servidor DNS reenviador es:",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Un servidor DNS que ha sido designado por otros servidores DNS para que se resuelvan nombres fuera del dominio en el que se encuentran.",
+        "options": [
+          "Un servidor DNS que ha sido designado por otros servidores DNS para que se resuelvan nombres fuera del dominio en el que se encuentran.",
+          "Cualquiera de los 13 servidores raíz al que los servidores DNS solicitan en primer lugar la resolución de nombres DNS de Internet.",
+          "Un servidor DNS primario que redirige una consulta de un nombre externo al dominio hacia otro servidor DNS.",
+          "Un servidor DNS que delega la administración de los nombres de un subdominio a otro servidor DNS."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "En Linux Debian/Ubuntu, el archivo de configuración del servicio BIND llamado named.conf incluye el contenido de varios archivos. De esos archivos, el dedicado a que un administrador declare nuevas zonas para el servidor se llama:",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: named.conf.local.",
+        "options": [
+          "named.conf.local.",
+          "named.conf.zones.",
+          "named.conf.options.",
+          "named.conf.default."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "En la declaración de una zona de resolución inversa para direcciones IP pertenecientes a la dirección de red 170.16.0.0/16 el nombre de la zona será:",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: 16.170.in-addr.arpa.",
+        "options": [
+          "16.170.in-addr.arpa.",
+          "0.16.170.in-addr.arpa.",
+          "0.0.16.170.in-addr.arpa.",
+          "170.16.0.in-addr.arpa."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "En un cliente DNS, el resolutor de nombres consulta primero:",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: La caché DNS.",
+        "options": [
+          "La caché DNS.",
+          "El archivo local host.",
+          "Al primer servidor DNS.",
+          "Al primer servidor DNS primario."
+        ]
+      },
+      {
+        "type": "fill",
+        "text": "Una resolución que obtiene un nombre DNS de un equipo a partir de su dirección IP se dice que es una resolución.",
+        "correct": [
+          "Inversa"
+        ],
+        "explanation": "Respuesta correcta: Inversa",
+        "options": []
+      },
+      {
+        "type": "single",
+        "text": "Una transferencia de zona entre un servidor primario y otro secundario DNS se produce:",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Cuando lo solicita el secundario.",
+        "options": [
+          "Cuando lo solicita el secundario.",
+          "Siempre que lo solicite el primario.",
+          "Cuando se hace alguna modificación en la zona.",
+          "Cada vez que en el secundario se edita la zona."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Para declarar que un servidor DNS BIND se va a utilizar como servidor DNS reenviador únicamente el servidor con dirección IP 195.235.113.3 hay que escribir en el archivo de configuración global del servicio la directiva:",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: forwarders {195.235.113.3; };.",
+        "options": [
+          "forwarders {195.235.113.3; };.",
+          "forward 195.235.113.3;.",
+          "forwarders {195.235.113.3 };.",
+          "forward {195.235.113.3};."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "En un archivo de zona, para indicar que la zona es secundaria, se utiliza la directiva:",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: type slave.",
+        "options": [
+          "type slave.",
+          "type master.",
+          "type secondary.",
+          "type hint."
+        ]
+      },
+      {
+        "type": "fill",
+        "text": "El tipo de registro de recursos de una zona que sirve para declarar que un equipo es servidor DNS en la zona se llama.",
+        "correct": [
+          "NS"
+        ],
+        "explanation": "Respuesta correcta: NS",
+        "options": []
+      },
+      {
+        "type": "tf",
+        "text": "En un proceso de resolución iterativa, un servidor DNS envía una consulta a uno de los servidores raíz y este le devuelve información sobre los servidores TLD que deben resolver la consulta a continuación. ¿Verdadero o Falso?",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Verdadero",
+        "options": [
+          "Verdadero",
+          "Falso"
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Si el nombre DNS de un equipo es \"dominio.pc.net\", el hostname de ese nombre es:",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: \"dominio\".",
+        "options": [
+          "\"dominio\".",
+          "\"net\".",
+          "\"pc.net\".",
+          "\"dominio.pc\"."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "El servicio DNS se comunica con los clientes DNS usando el puerto:",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: UDP 53.",
+        "options": [
+          "UDP 53.",
+          "UDP 67.",
+          "TCP 67.",
+          "TCP 25."
+        ]
+      },
+      {
+        "type": "fill",
+        "text": "A un nombre DNS de un equipo que representa el nombre completo del equipo dentro del espacio de nombres de dominio, se le conoce con las siglas.",
+        "correct": [
+          "FQDN"
+        ],
+        "explanation": "Respuesta correcta: FQDN",
+        "options": []
+      },
+      {
+        "type": "single",
+        "text": "Un dominio de primer nivel de tipo ccTLD:",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Integra dominios que pertenecen a un país.",
+        "options": [
+          "Integra dominios que pertenecen a un país.",
+          "Integra dominios que ofrecen sus servicios en un determinado idioma.",
+          "Tiene un nombre formado por dos o más letras.",
+          "Integra dominios con objetivos comerciales."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Para obtener los servidores NS del dominio ejemplo.com hay que ejecutar:",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: dig ejemplo.com.",
+        "options": [
+          "dig ns ejemplo.com.",
+          "dig ejemplo.com.",
+          "dig ejemplo.com ns.",
+          "ns dig ejemplo.com."
+        ]
+      },
+      {
+        "type": "fill",
+        "text": "El comando de Linux que se puede usar en modo interactivo para enviar consultas DNS a servidores DNS es",
+        "correct": [
+          "nslookup"
+        ],
+        "explanation": "Respuesta correcta: nslookup",
+        "options": []
+      },
+      {
+        "type": "tf",
+        "text": "Es obligatorio que la puerta de enlace predeterminada y los servidores DNS que se establezcan en la configuración de red de un ordenador estén en la misma red que el ordenador para que este pueda conectarse y trabajar en Internet. ¿Verdadero o Falso?",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Falso",
+        "options": [
+          "Verdadero",
+          "Falso"
+        ]
+      },
+      {
+        "type": "tf",
+        "text": "Una zona secundaria solo la podemos editar en el servidor secundario cuando está apagado o detenido el servidor primario. ¿Verdadero o Falso?",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Falso",
+        "options": [
+          "Verdadero",
+          "Falso"
+        ]
+      },
+      {
+        "type": "fill",
+        "text": "Para detener el servicio DNS BIND en sistemas Linux Debian/Ubuntu, debes ejecutar el comando.",
+        "correct": [
+          "/etc/BIND/bind9 stop"
+        ],
+        "explanation": "Respuesta correcta: /etc/BIND/bind9 stop",
+        "options": []
+      },
+      {
+        "type": "single",
+        "text": "Si hemos registrado un dominio, tenemos el servidor DNS para ese dominio en nuestra red y nuestro router tiene una IP dinámica, debemos contratar en alguna compañía de Internet un servicio que se llama:",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: DDNS.",
+        "options": [
+          "NO-IP.",
+          "DDNS.",
+          "DynDNS.",
+          "Dyn-DNS."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Un servidor DNS que tiene una copia de la zona y en el que no se puede editar la zona es un servidor:",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Secundario.",
+        "options": [
+          "Secundario.",
+          "Caché.",
+          "Reenviador.",
+          "Primario."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Para especificar en la zona DNS \"aula,org\" que se resuelva el nombre del equipo \"pc1\" perteneciente a la zona con la dirección IP 192.168.7.2, hay que añadir el registro:",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: \"pc1 IN A 192.168.7.2\".",
+        "options": [
+          "\"pc1 IN A 192.168.7.2\".",
+          "\"pc1.aula.org. IN A 192.168.7.2.\"",
+          "\"pc1. IN A 192.168.7.2\".",
+          "\"pc1.aula.org IN A 192.168.7.2\""
+        ]
+      },
+      {
+        "type": "tf",
+        "text": "En Internet, todas las resoluciones inversas de cualquier tipo de dirección IP se resuelven dado el dominio \"in-addr.arpa.\". ¿Verdadero o Falso?",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Falso",
+        "options": [
+          "Verdadero",
+          "Falso"
+        ]
+      },
+      {
+        "type": "tf",
+        "text": "En los sistemas Linux se establecen los servidores DNS utilizados por un equipo para que se encarguen de la resolución de los nombres en el archivo /etc/resolv.conf. ¿Verdadero o Falso?",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Verdadero",
+        "options": [
+          "Verdadero",
+          "Falso"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "SRI03",
+    "name": "HTTP / Apache — Servicio web",
+    "questions": [
+      {
+        "type": "tf",
+        "text": "La herramienta Webmin permite mostrar el contenido del archivo de configuración dhcpd.conf y también permite su modificación escribiendo directamente sobre él. ¿Verdadero o Falso?",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Verdadero",
+        "options": [
+          "Verdadero",
+          "Falso"
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Al crear con Webmin una máquina y establecer su IP, estaremos modificando en el archivo de configuración el parámetro:",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: address",
+        "options": [
+          "address",
+          "range",
+          "fixed-address",
+          "reserved-adress"
+        ]
+      },
+      {
+        "type": "single",
+        "text": "En el módulo BIND de la herramienta Webmin, el nombre que se usa para indicar una zona que se encarga de resolver nombres es:",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Reenvío.",
+        "options": [
+          "Reenvío.",
+          "Directa.",
+          "Inversa.",
+          "Resolución directa."
+        ]
+      },
+      {
+        "type": "tf",
+        "text": "En el módulo de configuración BIND de la herramienta gráfica Webmin se puede establecer que se creen automáticamente los registros PTR de resolución inversa cuando se están añadiendo registros tipo A. ¿Verdadero o Falso?",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Verdadero",
+        "options": [
+          "Verdadero",
+          "Falso"
+        ]
+      },
+      {
+        "type": "tf",
+        "text": "En el módulo BIND de la herramienta Webmin, cuando estamos editando registros de zona, no se pueden usar nombres relativos para los equipos. ¿Verdadero o Falso?",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Falso",
+        "options": [
+          "Verdadero",
+          "Falso"
+        ]
+      },
+      {
+        "type": "tf",
+        "text": "La directiva \"Allow from 10\" es incorrecta porque detrás de Allow from hay que escribir una dirección IP o un nombre de dominio. ¿Verdadero o Falso?",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Verdadero",
+        "options": [
+          "Verdadero",
+          "Falso"
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Cuando se establece en Apache un sistema de autenticación para el acceso a una determinada carpeta, el nombre de los usuarios que pueden acceder y sus contraseñas se encuentran almacenadas en un archivo de la carpeta llamado:",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: .htpasswd.",
+        "options": [
+          ".htaccess.",
+          ".htpasswd.",
+          "auth_basic.",
+          "userdir."
+        ]
+      },
+      {
+        "type": "tf",
+        "text": "Los servidores virtuales basados en direcciones IP permiten que el servidor Apache pueda utilizar una misma dirección IP para escuchar las peticiones sobre varios servidores virtuales. ¿Verdadero o Falso?",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Falso",
+        "options": [
+          "Verdadero",
+          "Falso"
+        ]
+      },
+      {
+        "type": "tf",
+        "text": "En la directiva \"DirectoryIndex\" solo se puede especificar el nombre de un archivo. ¿Verdadero o Falso?",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Falso",
+        "options": [
+          "Verdadero",
+          "Falso"
+        ]
+      },
+      {
+        "type": "single",
+        "text": "¿Cuál de los siguientes no es un método de petición HTTP?",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: INFO.",
+        "options": [
+          "INFO.",
+          "POST.",
+          "GET.",
+          "HEAD."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Por defecto un servidor HTTPS escucha en el puerto:",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: 443.",
+        "options": [
+          "443.",
+          "80.",
+          "8080.",
+          "63."
+        ]
+      },
+      {
+        "type": "fill",
+        "text": "Escribe en mayúsculas el nombre del método de petición HTTP que se utiliza cuando el navegador solicita una página web al tener rellenado un formulario y pulsar un botón ENVIAR:",
+        "correct": [
+          "POST"
+        ],
+        "explanation": "Respuesta correcta: POST"
+      },
+      {
+        "type": "tf",
+        "text": "No se pueden crear servidores virtuales en Apache si no hay establecida una directiva NameVirtualHost indicando direcciones IP y puerto de escucha para los servidores virtuales. ¿Verdadero o Falso?",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Verdadero",
+        "options": [
+          "Verdadero",
+          "Falso"
+        ]
+      },
+      {
+        "type": "fill",
+        "text": "Cuando en un navegador escribimos en la URL http://www.educacion.es nos conectamos con el puerto número TCP del servidor:",
+        "correct": [
+          "80"
+        ],
+        "explanation": "Respuesta correcta: 80",
+        "options": []
+      },
+      {
+        "type": "single",
+        "text": "El encabezado Date de una respuesta HTTP indica:",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: La fecha y hora en que comenzó el envío del recurso solicitado.",
+        "options": [
+          "La fecha y hora en que comenzó el envío del recurso solicitado.",
+          "La fecha y hora en que se recibió la petición.",
+          "La fecha y hora en que ha terminado el envío del recurso solicitado.",
+          "La fecha y hora en que se inició el envío de la petición correspondiente a la respuesta."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "La directiva de configuración Apache \"keepalive\" establece:",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Si se mantiene una conexión con un cliente para la petición y envío de todos los recursos de una página.",
+        "options": [
+          "Si se mantiene una conexión con un cliente para la petición y envío de todos los recursos de una página.",
+          "El tiempo máximo que puede durar una conexión HTTP con un cliente.",
+          "El tiempo máximo que puede transcurrir desde que un cliente hace una petición hasta que hace la siguiente.",
+          "El número máximo de recursos que pueden ser enviados por el servidor en un mensaje de respuesta."
+        ]
+      },
+      {
+        "type": "tf",
+        "text": "Para que el servidor Apache establezca las directivas del archivo /etc/apache2/ports.conf es necesario que haya una directiva include para ese archivo dentro del /etc/apache2/apache2.conf. ¿Verdadero o Falso?",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Verdadero",
+        "options": [
+          "Verdadero",
+          "Falso"
+        ]
+      },
+      {
+        "type": "single",
+        "text": "La directiva de Apache que establecería que por defecto se entregue a los clientes web el archivo principal.html cuando estos, no especifiquen ningún archivo en la URL es:",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: DirectoryIndex.",
+        "options": [
+          "DirectoryIndex.",
+          "ServerRoot.",
+          "DocumentRoot.",
+          "PrimaryDocument."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "En los sistemas Linux Debian/Ubuntu se establece por defecto que el archivo principal de configuración del servidor Apache:",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Se encuentra en /etc/apache2 y se llama apache2.conf.",
+        "options": [
+          "Se encuentra en /etc/apache2 y se llama apache2.conf.",
+          "Se encuentra en /etc/apache2 y se llama http.conf.",
+          "Se encuentra en /var/www se llama index.html.",
+          "Se encuentra en /etc/apache2/sites-available y se llama default.conf."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "El sistema que sirve para establecer en un servidor HTTP desde qué equipos se podrían visitar las páginas web que hay en una determinada carpeta del servidor, es un sistema de:",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Control de acceso.",
+        "options": [
+          "Control de acceso.",
+          "Autenticación.",
+          "Autorización.",
+          "Confidencialidad."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Podemos saber los módulos Apache que están activados mediante el contenido de la carpeta:",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: /etc/apache2/mods-enabled.",
+        "options": [
+          "/etc/apache2/mods-enabled.",
+          "/etc/apache2/mods-available.",
+          "/usr/lib/apache2/mods.",
+          "/usr/lib/apache2/activated-mods."
+        ]
+      },
+      {
+        "type": "tf",
+        "text": "Para iniciar el servidor Apache en Linux Debian/Ubuntu podemos ejecutar el comando \"sudo /etc/init.d apache2 start\". ¿Verdadero o Falso?",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Falso",
+        "options": [
+          "Verdadero",
+          "Falso"
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Cuando un navegador web solicita a un servidor web, una página web formada por el documento html e incluyendo varias imágenes.",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: El navegador envía un mensaje de petición por cada imagen.",
+        "options": [
+          "El navegador envía un mensaje de petición por cada imagen.",
+          "El navegador envía un solo mensaje de petición y el servidor le envía una respuesta con el documento html y otra respuesta por cada imagen.",
+          "El navegador envía un solo mensaje de petición y el servidor le envía una respuesta con el documento html y otra respuesta que incluye todas las imágenes.",
+          "El navegador envía un mensaje de petición para el documento html y otro para solicitar de todas las imágenes (siempre que sean del mismo tipo)."
+        ]
+      },
+      {
+        "type": "tf",
+        "text": "En la URL http://http.pc.ejemplo.com/index.html, el nombre del equipo servidor es pc.ejemplo.com. ¿Verdadero o Falso?",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Falso",
+        "options": [
+          "Verdadero",
+          "Falso"
+        ]
+      },
+      {
+        "type": "fill",
+        "text": "Escribe en minúsculas el nombre de la directiva de Apache que sirve para establecer que todos los archivos de un sitio web están bajo una determinada carpeta llamada:",
+        "correct": [
+          "documentroot"
+        ],
+        "explanation": "Respuesta correcta: documentroot"
+      },
+      {
+        "type": "fill",
+        "text": "El comando de Linux incluido en la distribución de Apache que sirve para activar un módulo Apache es:",
+        "correct": [
+          "a2enmod"
+        ],
+        "explanation": "Respuesta correcta: a2enmod"
+      },
+      {
+        "type": "fill",
+        "text": "El número de fichas o pestañas que hay en la ventana principal de configuración del servidor Apache es:",
+        "correct": [
+          "3"
+        ],
+        "explanation": "Respuesta correcta: 3",
+        "options": []
+      },
+      {
+        "type": "multi",
+        "text": "Señala cuáles de los siguientes navegadores web tienen distribución para sistemas Linux:",
+        "correct": [
+          0,
+          2,
+          3,
+          5
+        ],
+        "explanation": "Respuesta correcta: Chrome., Konqueror., Opera., Firefox.",
+        "options": [
+          "Chrome.",
+          "Explorer.",
+          "Konqueror.",
+          "Opera.",
+          "Safari.",
+          "Firefox."
+        ]
+      },
+      {
+        "type": "tf",
+        "text": "Hay mensajes de petición HTTP que incluyen información en el cuerpo del mensaje y otros que no. ¿Verdadero o Falso?",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Verdadero",
+        "options": [
+          "Verdadero",
+          "Falso"
+        ]
+      },
+      {
+        "type": "single",
+        "text": "El encabezado de petición HTTP que sirve para especificar el nombre y versión del navegador es:",
+        "correct": [
+          3
+        ],
+        "explanation": "Respuesta correcta: user-agent.",
+        "options": [
+          "referer.",
+          "user-version.",
+          "version.",
+          "user-agent."
+        ]
+      },
+      {
+        "type": "multi",
+        "text": "Señala cuáles de los siguientes datos forman parte de la línea de respuesta de un mensaje de respuesta HTTP.",
+        "correct": [
+          0,
+          1,
+          2
+        ],
+        "explanation": "Respuesta correcta: Código de la respuesta., Versión del protocolo., Descripción de la respuesta.",
+        "options": [
+          "Código de la respuesta.",
+          "Versión del protocolo.",
+          "Descripción de la respuesta.",
+          "Cuerpo de la respuesta.",
+          "Método de la respuesta.",
+          "Cabecera de la respuesta."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "La carpeta /etc/apache2/mods-available del servidor Apache contiene:",
+        "correct": [
+          3
+        ],
+        "explanation": "Respuesta correcta: Archivos de configuración de los módulos Apache.",
+        "options": [
+          "Los módulos Apache compilados.",
+          "Los archivos de código fuente de los módulos Apache.",
+          "Enlaces a los archivos de carga de los módulos Apache.",
+          "Archivos de configuración de los módulos Apache."
+        ]
+      },
+      {
+        "type": "multi",
+        "text": "Indica cuáles de los siguientes archivos se tienen que enviar a una Autoridad de Certificación para que nos emita un Certificado Digital.",
+        "correct": [
+          0,
+          1
+        ],
+        "explanation": "Respuesta correcta: De petición de firma., De clave privada.",
+        "options": [
+          "De petición de firma.",
+          "De clave privada.",
+          "De clave pública.",
+          "De autofirma.",
+          "De conexión SSL.",
+          "De cifrado."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "WWW es:",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Una red de documentos.",
+        "options": [
+          "El nombre de protocolo usado en la URL de una página web.",
+          "Una red de documentos.",
+          "Uno protocolo de transmisión de páginas web.",
+          "Un lenguaje de descripción de páginas web."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "SRI04",
+    "name": "FTP — Transferencia de archivos",
+    "questions": [
+      {
+        "type": "single",
+        "text": "Se puede limitar con FileZilla Client la velocidad máxima de las descargas en la opción:",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Transferencias.",
+        "options": [
+          "Conexión > velocidades.",
+          "Transferencias.",
+          "Ancho de banda.",
+          "Registro."
+        ]
+      },
+      {
+        "type": "tf",
+        "text": "Los nombres de los usuarios anónimos son siempre los mismos y no se pueden cambiar esos nombres anónimos ni añadir otros. ¿Verdadero o Falso?",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Falso",
+        "options": [
+          "Verdadero",
+          "Falso"
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Señala cuál de las siguientes directivas de configuración de vsftpd permite establecer si los usuarios anónimos pueden o no almacenar archivos en el directorio remoto:",
+        "correct": [
+          2
+        ],
+        "explanation": "Respuesta correcta: anon_upload_enable",
+        "options": [
+          "anon_write_enable",
+          "write_enable",
+          "anon_upload_enable",
+          "paste_enable"
+        ]
+      },
+      {
+        "type": "single",
+        "text": "En una conexión ftp establecida mediante el comando ftp de Linux, para transferir un archivo desde el directorio local al remoto, se utiliza el comando:",
+        "correct": [
+          3
+        ],
+        "explanation": "Respuesta correcta: put",
+        "options": [
+          "get",
+          "recv",
+          "upload",
+          "put"
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Cuando el servidor FTP envía al cliente una respuesta indicando que la acción solicitada se ha realizado correctamente, el código de la respuesta comienza con el número:",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: 2.",
+        "options": [
+          "1.",
+          "2.",
+          "3.",
+          "4."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "En el módulo de configuración de vsftpd de la herramienta gráfica, se establece que los usuarios trabajen enjaulados dentro de las opciones de:",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Local User.",
+        "options": [
+          "Local User.",
+          "Anonymous FTP.",
+          "Generally.",
+          "Miscellaneous."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Para iniciar el servidor vsftpd Ubuntu, debes ejecutar como superusuario el comando:",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: /etc/init.d/vsftpd",
+        "options": [
+          "/etc/vsftpd start",
+          "/etc/init.d/vsftpd",
+          "service VSFTPD start",
+          "service vsftp start"
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Del cliente FileZilla se distribuyen versiones solo para:",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Windows, Linux y macOS.",
+        "options": [
+          "Windows, Linux y macOS.",
+          "Windows.",
+          "Linux y Windows.",
+          "Linux."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Tras haber instalado el servidor vsftpd, solo podrían iniciar conexiones FTP al servidor:",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Usuarios anónimos y los locales del equipo servidor.",
+        "options": [
+          "Usuarios anónimos y los locales del equipo servidor.",
+          "Usuarios anónimos",
+          "El usuario que instaló el servidor y el usuario root.",
+          "Ningún usuario."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Una conexión FTP en la que el servidor envió al cliente cuál es el puerto que va a usar el servidor para la conexión de datos, se dice que trabaja en modo.",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Pasivo.",
+        "options": [
+          "Pasivo.",
+          "Activo.",
+          "ASCII.",
+          "BINARIO."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Si quieres establecer una limitación sobre la velocidad máxima de transferencia de archivos que se usará para las conexiones FTP de usuarios anónimos, tienes que acceder al elemento de la ventana principal de configuración de:",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Miscellaneus.",
+        "options": [
+          "Generally.",
+          "Miscellaneus.",
+          "Anonymous user.",
+          "Local User."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "¿Cuál de las siguientes afirmaciones no corresponde a una conexión FTP?",
+        "correct": [
+          2
+        ],
+        "explanation": "Respuesta correcta: La contraseña se transmite encriptada.",
+        "options": [
+          "La información se transmite en texto plano.",
+          "Al conectar hay una autenticación del usuario.",
+          "La contraseña se transmite encriptada.",
+          "Puede permitir borrar archivos almacenados en el servidor."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "La directiva de configuración del servidor vsftpd que establece el máximo número de conexiones que se pueden establecer simultáneamente con el servidor es:",
+        "correct": [
+          3
+        ],
+        "explanation": "Respuesta correcta: max_clients",
+        "options": [
+          "max_per_ip",
+          "max_connections",
+          "limit_connections",
+          "max_clients"
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Señala cuál de los siguientes tipos de archivos se transmitirá correctamente en una transferencia FTP de tipo ASCII:",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: html.",
+        "options": [
+          "jpg.",
+          "html.",
+          "pdf.",
+          "exe."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "¿Cuál de los siguientes clientes FTP se distribuye solo para sistemas Linux?",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: gFTP.",
+        "options": [
+          "gFTP.",
+          "smartFTP.",
+          "FileZilla.",
+          "FireFTP."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "En una conexión FTP en modo activo, el puerto en el que atiende el servidor la conexión de datos es:",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: 20.",
+        "options": [
+          "21.",
+          "20.",
+          "El que le indique el cliente.",
+          "Mayor que 1024."
+        ]
+      },
+      {
+        "type": "fill",
+        "text": "El archivo de configuración del servidor FTP se llama:",
+        "correct": [
+          "vsftpd.conf"
+        ],
+        "explanation": "Respuesta correcta: vsftpd.conf",
+        "options": []
+      },
+      {
+        "type": "single",
+        "text": "Si no se ha hecho ningún cambio en la configuración, cuando los usuarios anónimos se conectan a un servidor FTP vsftpd acceden a la carpeta remota:",
+        "correct": [
+          3
+        ],
+        "explanation": "Respuesta correcta: /srv/ftp",
+        "options": [
+          "/home/anonymous",
+          "/var/lib/ftp",
+          "/home/ftp",
+          "/srv/ftp"
+        ]
+      },
+      {
+        "type": "tf",
+        "text": "Los usuarios locales de FTP para el servidor vsftpd no pueden crearse mediante la configuración (editando el archivo o con herramienta gráfica) del servidor vsftpd. ¿Verdadero o Falso?",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Verdadero",
+        "options": [
+          "Verdadero",
+          "Falso"
+        ]
+      },
+      {
+        "type": "tf",
+        "text": "Todas las sesiones de conexión cliente-servidor FTP se establecen sobre una única conexión FTP ¿Verdadero o Falso?",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Falso",
+        "options": [
+          "Verdadero",
+          "Falso"
+        ]
+      },
+      {
+        "type": "fill",
+        "text": "El servidor FTP escucha la conexión de control en el puerto TCP:",
+        "correct": [
+          "21"
+        ],
+        "explanation": "Respuesta correcta: 21"
+      },
+      {
+        "type": "single",
+        "text": "¿Cuál de las siguientes no es una directiva para establecer que algún tipo de usuarios del servicio vsftpd tengan o no tengan acceso al servicio?",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: ftp_enable",
+        "options": [
+          "ftp_enable",
+          "guest_enable",
+          "local_enable",
+          "anonymous_enable"
+        ]
+      },
+      {
+        "type": "single",
+        "text": "El comando de la interfaz de Linux que sirve para descargar varios archivos es:",
+        "correct": [
+          2
+        ],
+        "explanation": "Respuesta correcta: get",
+        "options": [
+          "copy",
+          "download",
+          "get",
+          "mget"
+        ]
+      },
+      {
+        "type": "single",
+        "text": "La directiva puesta a valor YES sirve para indicar que:",
+        "correct": [
+          3
+        ],
+        "explanation": "Respuesta correcta: Los usuarios trabajen enjaulados.",
+        "options": [
+          "El usuario root pueda iniciar sesiones FTP.",
+          "Los usuarios inicien sesiones FTP con permisos de root.",
+          "Los usuarios accedan a la carpeta remota /home/root.",
+          "Los usuarios trabajen enjaulados."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "¿Cuál de los siguientes servidores no tiene distribución para Linux?",
+        "correct": [
+          3
+        ],
+        "explanation": "Respuesta correcta: FileZilla.",
+        "options": [
+          "Una red de documentos.",
+          "Uno protocolo de transmisión de páginas web.",
+          "El nombre de protocolo usado en la URL de una página web.",
+          "FileZilla."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Para establecer una cuota de disco en Ubuntu para un usuario se escribe la cuota en un archivo de cuotas ejecutando el comando:",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: edquota",
+        "options": [
+          "edquota",
+          "quotacheck",
+          "aquota",
+          "touch"
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Al proceso que se encarga en el cliente de enviar los comandos al servidor se le llama:",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Cliente PI.",
+        "options": [
+          "Cliente FTP.",
+          "Cliente PI.",
+          "Interfaz de usuario FTP.",
+          "DTP cliente."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "SRI05",
+    "name": "Correo electrónico",
+    "questions": [
+      {
+        "type": "tf",
+        "text": "Un servidor SMTP de tipo open relay reenvía todos los mensajes de correo que se le soliciten desde cualquier cliente o desde cualquier otro servidor. ¿Verdadero o Falso?",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Falso",
+        "options": [
+          "Verdadero",
+          "Falso"
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Un registro CNAME contiene en propietario:",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: El nombre alias de un equipo.",
+        "options": [
+          "El nombre alias de un equipo.",
+          "El nombre real de un equipo.",
+          "El nombre de la zona.",
+          "El nombre del dominio."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Para especificar en la zona DNS \"aula.org\" que el ordenador \"info\" es un servidor de correo, hay que añadir en la zona el registro:",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: \"aula.org. IN MX 0 info.aula.org.\".",
+        "options": [
+          "\"aula.org. IN MX 0 info.aula.org.\".",
+          "\"info.aula.org. IN MX 0 1 aula.org.\"",
+          "\" info.aula.org IN MX 0 1 aula.org.\"",
+          "\"info IN MX 0 aula.org.\"."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Para especificar que un determinado dominio va a ser dominio virtual para Postfix, hay que usar en el archivo de configuración la directiva:",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: virtual_alias_domains",
+        "options": [
+          "virtual_domains",
+          "virtual_alias_domains",
+          "mydestination",
+          "relay_domains"
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Para especificar que un servidor MTA de correo es servidor en un dominio, hay que añadir en la zona directa correspondiente un registro de tipo:",
+        "correct": [
+          2
+        ],
+        "explanation": "Respuesta correcta: MX.",
+        "options": [
+          "PTR.",
+          "NS.",
+          "MX."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Cuando un servidor SMTP tiene que enviar un correo y no corresponde a uno de los dominios en los que administra cuentas de correo:",
+        "correct": [
+          3
+        ],
+        "explanation": "Respuesta correcta: Lo envía hacia el servidor SMTP del otro dominio.",
+        "options": [
+          "Lo almacena en el buzón para usuarios desconocidos.",
+          "Lo rechaza.",
+          "Lo envía hacia el servidor POP del otro dominio.",
+          "Lo envía hacia el servidor SMTP del otro dominio."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Al enviar el correo a un alias de correo perteneciente a un dominio, el correo queda almacenado en:",
+        "correct": [
+          2
+        ],
+        "explanation": "Respuesta correcta: Un buzón de una cuenta real del sistema asociada y del mismo dominio.",
+        "options": [
+          "Un buzón reservado para el alias.",
+          "Un buzón de la cuenta asociada de otro dominio.",
+          "Un buzón de una cuenta real del sistema asociada y del mismo dominio.",
+          "El buzón dedicado a todos los alias del dominio."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "¿Cuál de los siguientes no es un tipo de registro de recursos?",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: ALIAS.",
+        "options": [
+          "ALIAS.",
+          "SOA.",
+          "AAAA.",
+          "TXT."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Señala cuál de las siguientes cabeceras de un mensaje de correo electrónico indica de qué trata el correo electrónico.",
+        "correct": [
+          3
+        ],
+        "explanation": "Respuesta correcta: Subject.",
+        "options": [
+          "From.",
+          "To.",
+          "Body.",
+          "Subject."
+        ]
+      },
+      {
+        "type": "fill",
+        "text": "El término en inglés con el que se define al correo no deseado que reciben masivamente los usuarios de correo es:",
+        "correct": [
+          "SPAM"
+        ],
+        "explanation": "Respuesta correcta: SPAM",
+        "options": []
+      },
+      {
+        "type": "tf",
+        "text": "Si se usa el protocolo POP3, se eliminan los mensajes del buzón de usuario en el servidor cuando se descargan con un cliente. ¿Verdadero o Falso?",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Verdadero",
+        "options": [
+          "Verdadero",
+          "Falso"
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Si quieres editar en un archivo palabras clave que se van a buscar en los mensajes de correo para establecer sobre estos reglas de filtrado de correo, tienes que indicar en el archivo de configuración main.cf el nombre y la ruta de ese archivo dentro de una directiva:",
+        "correct": [
+          3
+        ],
+        "explanation": "Respuesta correcta: body_checks",
+        "options": [
+          "smtpd_sender_restrictions",
+          "smtpd_keys_restrictions",
+          "keywords_ checks",
+          "body_checks"
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Los códigos de respuesta SMTP que comienzan por 3 indican:",
+        "correct": [
+          2
+        ],
+        "explanation": "Respuesta correcta: Se requiere el envío de más información para completar la operación.",
+        "options": [
+          "La operación solicitada no se ha podido realizar ni se podrá realizar.",
+          "La operación solicitada no se ha podido realizar temporalmente pero que es posible realizarla más tarde.",
+          "Se requiere el envío de más información para completar la operación.",
+          "La operación se ha realizado con éxito."
+        ]
+      },
+      {
+        "type": "multi",
+        "text": "Señala cuáles de los siguientes programas son agentes MTA de correo electrónico:",
+        "correct": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "explanation": "Respuesta correcta: Microsoft Exchange Server.",
+        "options": [
+          "Microsoft Exchange Server.",
+          "SendMail.",
+          "hMailServer.",
+          "Postfix.",
+          "QMail.",
+          "Thunderbird."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "El archivo en el que se establecen los alias de cuentas de correo de Postfix en Linux Ubuntu es:",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: /etc/aliases",
+        "options": [
+          "/etc/aliases",
+          "/etc/Postfix/alias",
+          "/etc(Postfix/alias.conf",
+          "/etc/Postfix/aliases.conf"
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Si quieres indicar que los equipos de la red 192.168.3.0 pueden usar el servidor para enviar correo a través de él, debes utilizar la directiva para configurar el parámetro:",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: mynetworks",
+        "options": [
+          "inet_interfaces",
+          "mynetworks",
+          "relayhost",
+          "no_reject_ip"
+        ]
+      },
+      {
+        "type": "tf",
+        "text": "El protocolo IMAP permite que dos personas distintas puedan acceder al buzón de un usuario desde dos ordenadores distintos y a la vez. ¿Verdadero o falso?",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Verdadero",
+        "options": [
+          "Verdadero",
+          "Falso"
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Un servidor SMTP escucha a los clientes en el puerto:",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: TCP 25.",
+        "options": [
+          "TCP 25.",
+          "UDP 25.",
+          "TCP 21.",
+          "UDP 21."
+        ]
+      },
+      {
+        "type": "tf",
+        "text": "Tras iniciar una conexión Telnet con un servidor SMTP, el primer comando que hay que enviar al servidor para que se pueda enviar un mensaje es MAIL FROM. ¿Verdadero o Falso?",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Falso",
+        "options": [
+          "Verdadero",
+          "Falso"
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Un agente X de correo electrónico ha recibido un mensaje y lo está enviando a un servidor del mismo tipo. El agente X es un agente:",
+        "correct": [
+          3
+        ],
+        "explanation": "Respuesta correcta: MTA.",
+        "options": [
+          "MDA.",
+          "MUA.",
+          "MMA.",
+          "MTA."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "¿Cuál de los siguientes servidores es un agente MDA de correo electrónico?",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Dovecot.",
+        "options": [
+          "Dovecot.",
+          "Postfix.",
+          "Sendmail.",
+          "Thunderbird."
+        ]
+      },
+      {
+        "type": "multi",
+        "text": "Señala cuáles de los siguientes programas son agentes MUA:",
+        "correct": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "explanation": "Respuesta correcta: Evolution.",
+        "options": [
+          "Evolution.",
+          "mutt.",
+          "Thunderbird.",
+          "Windows Live Mail.",
+          "Sendmail.",
+          "Dovecot. g. Postfix."
+        ]
+      },
+      {
+        "type": "tf",
+        "text": "Si en el archivo /etc/aliases hay una línea profes:luis, el correo enviado a la cuenta profes se almacena en el buzón de luis. ¿Verdadero o falso?",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Verdadero",
+        "options": [
+          "Verdadero",
+          "Falso"
+        ]
+      },
+      {
+        "type": "fill",
+        "text": "Escribe el nombre del archivo principal de configuración del servidor Postfix en Linux Ubuntu, incluyendo la ruta del archivo:",
+        "correct": [
+          "/etc/Postfix/main.cf"
+        ],
+        "explanation": "Respuesta correcta: /etc/Postfix/main.cf",
+        "options": []
+      },
+      {
+        "type": "tf",
+        "text": "El archivo de Linux Ubuntu /etc/mailname contiene el nombre del servidor de correo. ¿Verdadero o Falso?",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Falso",
+        "options": [
+          "Verdadero",
+          "Falso"
+        ]
+      },
+      {
+        "type": "single",
+        "text": "En una aplicación de correo electrónico. ¿Podemos ver una página sindicada aunque tenga formato web?",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Sí, es posible.",
+        "options": [
+          "No, no es un programa específico.",
+          "Sí, es posible.",
+          "Sí, pero debe tener un plugin para realizar el visionado.",
+          "Ninguna es correcta."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Señala cuál de las siguientes afirmaciones es falsa respecto de un cliente de correo y el protocolo de descarga usado:",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Si se usa POP se mantiene la conexión con el servidor durante la descarga de mensajes, y si se usa IMAP se mantiene durante toda la sesión del cliente.",
+        "options": [
+          "Si se usa POP se mantiene la conexión con el servidor durante la descarga de mensajes, y si se usa IMAP se mantiene durante toda la sesión del cliente.",
+          "Tanto si se usa POP como si se usa IMAP se mantiene la conexión con el servidor durante la descarga de mensajes.",
+          "Si se usa IMAP se mantiene la conexión con el servidor durante la descarga de mensajes y si se usa POP se mantiene durante toda la sesión del cliente.",
+          "Tanto si se usa POP como si se usa IMAP se mantiene la conexión con el servidor durante toda la sesión del cliente y no solo durante la solicitud de descarga de correo."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "¿Cuál de los siguientes no es un cliente de correo electrónico con interfaz en modo texto?",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: mail.",
+        "options": [
+          "mutt.",
+          "mail.",
+          "pine.",
+          "kmail."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "En la instalación de Postfix en Ubuntu se crean automáticamente los siguientes archivos relacionados con la autenticación en SMTP del servidor:",
+        "correct": [
+          2
+        ],
+        "explanation": "Respuesta correcta: Un archivo de certificado autofirmado y un archivo de clave privada.",
+        "options": [
+          "Un archivo de solicitud de certificado, un archivo de clave privada y un archivo de clave pública.",
+          "Un archivo de certificado y un archivo de solicitud de firma.",
+          "Un archivo de certificado autofirmado y un archivo de clave privada.",
+          "Un archivo de clave privada y un archivo de clave pública."
+        ]
+      },
+      {
+        "type": "fill",
+        "text": "Un servidor POP3 escucha la conexión de control en el puerto TCP:",
+        "correct": [
+          "110"
+        ],
+        "explanation": "Respuesta correcta: 110",
+        "options": []
+      },
+      {
+        "type": "multi",
+        "text": "Señala cuáles de los siguientes son programas servidores POP de correo electrónico:",
+        "correct": [
+          0,
+          2
+        ],
+        "explanation": "Respuesta correcta: hMailServer.",
+        "options": [
+          "hMailServer.",
+          "Sendmail.",
+          "Dovecot.",
+          "Mailbox.",
+          "Postfix.",
+          "Evolution."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Un servidor seguro para SMTPS escucha en el puerto:",
+        "correct": [
+          3
+        ],
+        "explanation": "Respuesta correcta: TCP 465.",
+        "options": [
+          "TCP 25.",
+          "UDP 25.",
+          "TCP 995.",
+          "TCP 465."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Un usuario edita un correo y le envía desde un:",
+        "correct": [
+          2
+        ],
+        "explanation": "Respuesta correcta: MUA.",
+        "options": [
+          "MDA.",
+          "MMA.",
+          "MUA.",
+          "MTA."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Un servidor de correo MTA que acepta peticiones de reenvío de correo desde cualquier otro servidor es un servidor:",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Open relay.",
+        "options": [
+          "Open relay.",
+          "Postfix-Dovecot.",
+          "Reenviador.",
+          "Smart host."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Tendrás en Linux un servidor MTA y otro MDA si instalas los servidores:",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Sendmail y Dovecot.",
+        "options": [
+          "Sendmail y Dovecot.",
+          "Postfix y ClamV.",
+          "Dovecot y Thunderbird.",
+          "SendMail y Postfix."
+        ]
+      },
+      {
+        "type": "tf",
+        "text": "Thunderbird permite cifrar los mensajes con un certificado pero no permite firmarlos digitalmente. ¿Verdadero o falso?",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Falso",
+        "options": [
+          "Verdadero",
+          "Falso"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "SRI06",
+    "name": "Mensajería, listas y noticias",
+    "questions": [
+      {
+        "type": "single",
+        "text": "¿Cuál de los siguientes programas es un cliente específico lector de noticias con distribución solo para sistemas Windows?",
+        "correct": [
+          3
+        ],
+        "explanation": "Respuesta correcta: Xnews.",
+        "options": [
+          "Microsoft Live Mail.",
+          "Pan.",
+          "Knode.",
+          "Xnews."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Un servidor NNTP se comunica con los clientes a través del puerto no seguro:",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: TCP 119.",
+        "options": [
+          "TCP 25.",
+          "TCP 119.",
+          "TCP 563.",
+          "TCP 995."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Un grupo de noticias comp.* trata temas de:",
+        "correct": [
+          2
+        ],
+        "explanation": "Respuesta correcta: De informática.",
+        "options": [
+          "Relaciones sociales.",
+          "Comerciales.",
+          "De informática.",
+          "Ocio y tiempo libre."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Señala la afirmación falsa correspondiente a un servicio de noticias:",
+        "correct": [
+          2
+        ],
+        "explanation": "Respuesta correcta: Las noticias se envían por correo electrónico a los usuarios.",
+        "options": [
+          "Los usuarios deben suscribirse para recibir las noticias.",
+          "Los servidores recopilan noticias de otros servidores.",
+          "Las noticias se envían por correo electrónico a los usuarios.",
+          "Los servidores de noticias envían noticias a otros servidores de noticias."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "¿Cuál de las siguientes afirmaciones es falsa para las listas de distribución?",
+        "correct": [
+          3
+        ],
+        "explanation": "Respuesta correcta: Un usuario crea una lista de distribución en su cliente de correo.",
+        "options": [
+          "Un mensaje enviado a una lista de distribución se envía a todos los usuarios de la lista.",
+          "Es posible que un usuario filtre algunos mensajes para que no sean reenviados.",
+          "Un usuario puede suscribirse voluntariamente a una lista de distribución.",
+          "Un usuario crea una lista de distribución en su cliente de correo."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "El gestor de listas de distribución que tiene versiones para plataformas Windows, Linux y macOS es:",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: LISTSERV.",
+        "options": [
+          "LISTSERV.",
+          "Microsoft Exchange.",
+          "Majordomo.",
+          "Mailman."
+        ]
+      },
+      {
+        "type": "fill",
+        "text": "Los lectores RSS leen primero unos archivos que contienen títulos y breves descripciones de noticias llamados:",
+        "correct": [
+          "feeds"
+        ],
+        "explanation": "Respuesta correcta: feeds"
+      },
+      {
+        "type": "tf",
+        "text": "El servidor Mailman se administra con una aplicación web formada por varios módulos CGI. ¿Verdadero o Falso?",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Verdadero",
+        "options": [
+          "Verdadero",
+          "Falso"
+        ]
+      },
+      {
+        "type": "single",
+        "text": "El protocolo NNTP se usa en el servicio de:",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Noticias.",
+        "options": [
+          "Noticias.",
+          "Listas de distribución.",
+          "Chat.",
+          "Mensajería instantánea."
+        ]
+      },
+      {
+        "type": "fill",
+        "text": "Puedes crear una lista de distribución llamada lectura para el servidor Mailman ejecutando el comando de Linux:",
+        "correct": [
+          "newlist lectura"
+        ],
+        "explanation": "Respuesta correcta: newlist lectura",
+        "options": []
+      },
+      {
+        "type": "single",
+        "text": "Una lista de distribución en la que solo publican mensajes los usuarios que se han designado como encargados de hacerlo es:",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Un boletín de noticias.",
+        "options": [
+          "Una lista privada.",
+          "Un boletín de noticias.",
+          "Una lista de debate.",
+          "Una lista personalizada."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Una lista de distribución es privada si:",
+        "correct": [
+          2
+        ],
+        "explanation": "Respuesta correcta: Las suscripciones se aceptan si cumplen unas condiciones.",
+        "options": [
+          "No se puede ampliar el número de miembros que se asignaron al crear la lista.",
+          "El propietario es una entidad privada.",
+          "Las suscripciones se aceptan si cumplen unas condiciones.",
+          "Tiene un moderador que controla los mensajes enviados."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Que los miembros de una lista de distribución reciban los mensajes en modo normal quiere decir que:",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Reciben todos los mensajes de la lista completos.",
+        "options": [
+          "Reciben todos los mensajes de la lista completos.",
+          "Reciben los mensajes de la lista desde su servidor de correo POP.",
+          "Reciben los mensajes de la lista desde el servidor de listas.",
+          "Reciben los mensajes de la lista online."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Una lista de distribución a la que solo pueden enviar mensajes los usuarios de la lista es:",
+        "correct": [
+          2
+        ],
+        "explanation": "Respuesta correcta: Cerrada.",
+        "options": [
+          "Privada.",
+          "Estática.",
+          "Cerrada.",
+          "Exclusiva."
+        ]
+      },
+      {
+        "type": "tf",
+        "text": "Cuando un usuario de mensajería instantánea pasa a estado no disponible, los usuarios que tienen en sus contactos al anterior usuario, no le ven en su lista de contactos. ¿Verdadero o Falso?",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Falso",
+        "options": [
+          "Verdadero",
+          "Falso"
+        ]
+      },
+      {
+        "type": "single",
+        "text": "¿Cuál de las siguientes no es una adecuada norma de respeto en el uso de la mensajería instantánea?",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Se deben tratar los asuntos con humor para intentar alegrar la vida a los demás.",
+        "options": [
+          "Se deben tratar los asuntos con humor para intentar alegrar la vida a los demás.",
+          "Se debe tratar de adaptar el lenguaje al del otro.",
+          "Se deben dar por terminadas las conversaciones con mensajes que así lo indiquen.",
+          "No es adecuado usar en los mensajes verbos que denoten que se exige algo."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "¿Cuál de los siguientes no es un cliente de Chat sino que es de mensajería instantánea?",
+        "correct": [
+          3
+        ],
+        "explanation": "Respuesta correcta: psi.",
+        "options": [
+          "mIRC.",
+          "SolarIRC.",
+          "Xchat.",
+          "psi."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Señala cuál de las siguientes no es una característica del servicio IRC.",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: El usuario dispone de una lista de contactos con los que se puede conectar.",
+        "options": [
+          "Los usuarios no necesitan registrarse para acceder al servicio.",
+          "El usuario dispone de una lista de contactos con los que se puede conectar.",
+          "Los usuarios se conectan a salas del servidor en las que se abordan determinados temas.",
+          "En una sala de conversación pueden intervenir muchos usuarios."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Señala cuál de los siguientes programas es un cliente gráfico de mensajería instantánea.",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Psi.",
+        "options": [
+          "Psi.",
+          "Bitlbee.",
+          "Finch.",
+          "Pebrot."
+        ]
+      },
+      {
+        "type": "fill",
+        "text": "¿Cuál es el nombre del directorio donde queda almacenado el programa para iniciar y detener el servicio Openfire en sistemas Linux? Escribe solo el nombre del directorio (no la ruta en que se encuentra).",
+        "correct": [
+          "bin"
+        ],
+        "explanation": "Respuesta correcta: bin",
+        "options": []
+      },
+      {
+        "type": "single",
+        "text": "¿Cuál de las siguientes afirmaciones es cierta para un usuario que está usando un cliente de mensajería instantánea?",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: El usuario ve a todos sus contactos y el estado en que están.",
+        "options": [
+          "El usuario ve a todos sus contactos y el estado en que están.",
+          "El usuario ve a todos sus contactos excepto los no conectados.",
+          "El usuario ve a todos los usuarios conectados al servidor.",
+          "El usuario ve solo a sus contactos que estén conectados."
+        ]
+      },
+      {
+        "type": "fill",
+        "text": "En el servicio de chat se usa el protocolo:",
+        "correct": [
+          "IRC"
+        ],
+        "explanation": "Respuesta correcta: IRC",
+        "options": []
+      },
+      {
+        "type": "tf",
+        "text": "Openfire incluye un módulo de administración en su aplicación web de administración y configuración para gestionar conferencias. ¿Verdadero o Falso?",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Verdadero",
+        "options": [
+          "Verdadero",
+          "Falso"
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Señala cuál de los siguientes programas es un cliente de mensajería instantánea que trabaja en modo texto.",
+        "correct": [
+          2
+        ],
+        "explanation": "Respuesta correcta: Finch.",
+        "options": [
+          "Pidgin.",
+          "Psi.",
+          "Finch.",
+          "Talk."
+        ]
+      },
+      {
+        "type": "fill",
+        "text": "La aplicación web de administración del servidor Openfire se ejecuta escuchando en el puerto TCP número:",
+        "correct": [
+          "9090"
+        ],
+        "explanation": "Respuesta correcta: 9090",
+        "options": []
+      },
+      {
+        "type": "single",
+        "text": "El protocolo XMPP también se conoce con el nombre:",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Jabber.",
+        "options": [
+          "Talk.",
+          "Jabber.",
+          "OSCAR.",
+          "ICQ."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "¿Cuál de las siguientes no es una característica del protocolo XMPP?",
+        "correct": [
+          3
+        ],
+        "explanation": "Respuesta correcta: Es un protocolo para servicio de noticias.",
+        "options": [
+          "Es de código abierto.",
+          "Es descentralizado.",
+          "Su implementación facilita la extensión con nuevas funcionalidades.",
+          "Es un protocolo para servicio de noticias."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "SRI07",
+    "name": "Multimedia y streaming",
+    "questions": [
+      {
+        "type": "tf",
+        "text": "Los plugins son subprogramas que se utilizan solo en navegadores web. ¿Verdadero o falso?",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Falso",
+        "options": [
+          "Verdadero",
+          "Falso"
+        ]
+      },
+      {
+        "type": "tf",
+        "text": "Con el protocolo HTTP se puede realizar streaming. ¿Verdadero o falso?",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Verdadero",
+        "options": [
+          "Verdadero",
+          "Falso"
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Una de las siguientes funcionalidades de un cliente de mensajería instantánea no es una funcionalidad adicional, es decir, la incluye cualquier cliente:",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Gestión de contactos.",
+        "options": [
+          "Transmisión de archivos adjuntos.",
+          "Gestión de contactos.",
+          "Comunicación simultánea entre varios usuarios.",
+          "Transmisión de audio."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Señala cuál de los siguiente programas clientes permite la mensajería instantánea pero está orientado fundamentalmente a las videollamadas:",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Skype.",
+        "options": [
+          "Skype.",
+          "Yahoo! Messenger.",
+          "Pidgin.",
+          "Psi."
+        ]
+      },
+      {
+        "type": "tf",
+        "text": "Un vodcast es un podcast de vídeo. ¿Verdadero o falso?",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Verdadero",
+        "options": [
+          "Verdadero",
+          "Falso"
+        ]
+      },
+      {
+        "type": "single",
+        "text": "¿Un usuario cliente necesita conocer la importancia de los protocolos para realizar una videoconferencia?",
+        "correct": [
+          2
+        ],
+        "explanation": "Respuesta correcta: No, el software que utiliza tiene implementado este soporte.",
+        "options": [
+          "No, porque siempre tendremos un software que lo hará todo.",
+          "Ninguna es correcto.",
+          "No, el software que utiliza tiene implementado este soporte.",
+          "Sí, eso le permitirá mejorar la configuración del software."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Los archivos multimedia pueden ser reproducidos en cualquier sistema operativo.",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Sí, siempre que tengamos el software y este contenga el códec adecuado.",
+        "options": [
+          "No, solo en los sistemas operativos que contengan formatos compatibles con el archivo multimedia que se quiere visualizar.",
+          "Sí, siempre que tengamos el software y este contenga el códec adecuado.",
+          "Sí, el sistema operativo puede reproducir cualquier formato de vídeo y audio.",
+          "No, necesita actualizar el sistema operativo para que soporte los distintos formatos de audio y vídeo."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Un formato de vídeo sin pérdida, ¿qué significa?",
+        "correct": [
+          2
+        ],
+        "explanation": "Respuesta correcta: Es aquel formato de vídeo o audio que realiza la compresión eliminando redundancias en la señal de vídeo o audio.",
+        "options": [
+          "Es aquel formato de vídeo o audio que realiza una compresión eficiente del archivo multimedia.",
+          "Es aquel formato de audio o vídeo que realiza la compresión eliminando aquella información que no es perceptible por el oído humano.",
+          "Es aquel formato de vídeo o audio que realiza la compresión eliminando redundancias en la señal de vídeo o audio.",
+          "Ninguna respuesta es correcta."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "¿Qué es RTSP?",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Es un protocolo de nivel de aplicación encargado de la gestión y control de la transmisión de uno o varios flujos de contenido multimedia hacia un cliente.",
+        "options": [
+          "Es un protocolo de nivel de aplicación encargado de la gestión y control de la transmisión de uno o varios flujos de contenido multimedia hacia un cliente.",
+          "Es un protocolo de nivel de aplicación encapsulado en el protocolo HTTP.",
+          "Es un servicio del servidor de streaming.",
+          "Es un servicio en el equipo cliente que permite la recepción de streaming."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Para conseguir una muestra fidedigna en un archivo multimedia, debemos:",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Aumentar en lo posible la frecuencia de muestreo y la calidad.",
+        "options": [
+          "No codificarlo.",
+          "Aumentar en lo posible la frecuencia de muestreo y la calidad.",
+          "Aumentar el tamaño de las imágenes.",
+          "Aumentar la calidad de las imágenes."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Webinar es…",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Un tipo de conferencia, taller o seminario que se transmite por la web.",
+        "options": [
+          "Un tipo de conferencia a través de Internet.",
+          "Un tipo de conferencia, taller o seminario que se transmite por la web.",
+          "Un tipo de videoconferencia.",
+          "Ninguna respuesta es correcta."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "¿Qué es una imagen vectorial?",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Son aquellas imágenes que están formadas por objetos geométricos independientes, cada uno de ellos definido por distintos atributos matemáticos de forma, de posición, de color, etc.",
+        "options": [
+          "Son aquellas imágenes que están formadas por objetos geométricos independientes, cada uno de ellos definido por distintos atributos matemáticos de forma, de posición, de color, etc.",
+          "Son aquellas imágenes que han sido tratadas con un software especial como Flash de Adobe.",
+          "Son aquellas imágenes que tienen un formato de pixelización comprimida.",
+          "Son aquellas imágenes que están formadas por código XML para definir las características de la imagen."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "¿Qué es un reproductor multimedia?",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Es un software que permite la reproducción de archivos multimedia.",
+        "options": [
+          "Es un software que permite la reproducción de archivos multimedia.",
+          "Es un software que permite conectarse con el servidor de streaming para enviar o recibir archivos multimedia codificados.",
+          "Es un software propietario que está incluido en el sistema operativo.",
+          "Ninguna respuesta es correcta."
+        ]
+      },
+      {
+        "type": "tf",
+        "text": "Un códec de audio es un archivo comprimido que se utiliza para transferir más rápido un archivo de audio multimedia. ¿Verdadero o falso?",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Falso",
+        "options": [
+          "Verdadero",
+          "Falso"
+        ]
+      },
+      {
+        "type": "tf",
+        "text": "Los archivos de vídeo son imágenes superpuestas una detrás de otra. ¿Verdadero o falso?",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Verdadero",
+        "options": [
+          "Verdadero",
+          "Falso"
+        ]
+      },
+      {
+        "type": "single",
+        "text": "En una emisión en directo. ¿Dónde se origina el archivo multimedia?",
+        "correct": [
+          2
+        ],
+        "explanation": "Respuesta correcta: Mediante la captura con una cámara con audio incorporado y conectado a un equipo que enviará el resultado al servidor de streaming.",
+        "options": [
+          "En el servidor que almacena el archivo multimedia.",
+          "No existen emisiones en directo por streaming.",
+          "Mediante la captura con una cámara con audio incorporado y conectado a un equipo que enviará el resultado al servidor de streaming.",
+          "Ninguna respuesta es correcta."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "La aplicación VLC, ¿puede reproducir archivos de audio?",
+        "correct": [
+          3
+        ],
+        "explanation": "Respuesta correcta: Ninguna es correcta.",
+        "options": [
+          "No, solo puede reproducir audio pero incrustado en el vídeo.",
+          "Sí, siempre y cuando tenga el códec de audio.",
+          "Sí, pero ocultando el formato de vídeo.",
+          "Ninguna es correcta."
+        ]
+      },
+      {
+        "type": "tf",
+        "text": "Los formatos de audio son contenedores multimedia. ¿Verdadero o falso?",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Verdadero",
+        "options": [
+          "Verdadero",
+          "Falso"
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Si, por ejemplo, queremos subir un vídeo al portal YouTube. ¿Qué debemos valorar más a la hora de publicar un vídeo?",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Debemos exportar el archivo multimedia a un formato web (flash) y que, además, sea más pequeño el tamaño final que se suba equilibrando la resolución y la calidad de sonido.",
+        "options": [
+          "Tener un gran ancho de banda para poder subir un archivo multimedia de gran calidad.",
+          "Debemos exportar el archivo multimedia a un formato web (flash) y que, además, sea más pequeño el tamaño final que se suba equilibrando la resolución y la calidad de sonido.",
+          "Ninguna respuesta es correcta.",
+          "Una alta calidad de imagen y sonido."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "¿Qué es el CDN?",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Es un sistema de ordenadores que contienen copias de datos.",
+        "options": [
+          "Es un sistema de ordenadores que contienen copias de datos.",
+          "Es un sistema de Streaming.",
+          "Es un formato de audio/vídeo.",
+          "Es un protocolo que encapsula los protocolos rápidos de transmisión de archivos multimedia RTSP y RTP."
+        ]
+      },
+      {
+        "type": "tf",
+        "text": "Los archivos de vídeo son igual de tamaño que los de audio. ¿Verdadero o falso?",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Falso",
+        "options": [
+          "Verdadero",
+          "Falso"
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Streaming es…",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Un servicio que permite intercambio de ficheros, habitualmente del tipo multimedia, en una arquitectura cliente/ servidor.",
+        "options": [
+          "Un servidor dedicado exclusivamente a ofrecer servicios multimedia.",
+          "Un servicio que permite intercambio de ficheros, habitualmente del tipo multimedia, en una arquitectura cliente/ servidor.",
+          "Un servicio del sistema operativo Windows.",
+          "Todos los servicios web que ofrecen archivos multimedia."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "¿Qué es un códec?",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Es un codificador/decodificador de audio/vídeo.",
+        "options": [
+          "Es un compresor de archivos de audio/vídeo.",
+          "Es un codificador/decodificador de audio/vídeo.",
+          "Es un software propietario para evitar la piratería de archivos multimedia.",
+          "Ninguna respuesta es correcta."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Un formato de vídeo con pérdida, ¿qué significa?",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Es aquel formato de audio o vídeo que realiza la compresión eliminando aquella información que no es perceptible por el oído humano.",
+        "options": [
+          "Es aquel formato de vídeo o audio que realiza una compresión eficiente del archivo multimedia.",
+          "Es aquel formato de audio o vídeo que realiza la compresión eliminando aquella información que no es perceptible por el oído humano.",
+          "Ninguna respuesta es correcta.",
+          "Es aquel formato de vídeo o audio que realiza la compresión en función del destino del archivo a comprimir."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Cuando queremos reproducir un elemento de streaming, ¿Qué necesitamos?",
+        "correct": [
+          2
+        ],
+        "explanation": "Respuesta correcta: Una aplicación, de escritorio o plugin, para reproducir el archivo multimedia.",
+        "options": [
+          "Se requiere que el navegador tenga instalado el plugin adecuado.",
+          "Ninguna es correcta.",
+          "Una aplicación, de escritorio o plugin, para reproducir el archivo multimedia.",
+          "Necesitamos una aplicación de escritorio para reproducirlo."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "¿Qué es FPS?",
+        "correct": [
+          1
+        ],
+        "explanation": "Respuesta correcta: Es un indicador de la frecuencia con la que los fotogramas se muestran por unidad de tiempo (segundo).",
+        "options": [
+          "Significa Flaps per second.",
+          "Es un indicador de la frecuencia con la que los fotogramas se muestran por unidad de tiempo (segundo).",
+          "Es un formato de archivo multimedia.",
+          "Es un formato de archivo de audio."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Cuando entramos a la web de una cadena de televisión. Si queremos ver un programa ya emitido. ¿Cómo visualizaremos el contenido?",
+        "correct": [
+          0
+        ],
+        "explanation": "Respuesta correcta: Necesitaremos un plugin, en la mayoría de los casos, y se realizará por streaming.",
+        "options": [
+          "Necesitaremos un plugin, en la mayoría de los casos, y se realizará por streaming.",
+          "Descargaremos el programa completo en nuestro equipo y lo podremos reproducir.",
+          "No existe esta posibilidad.",
+          "Ninguna es correcta."
+        ]
+      },
+      {
+        "type": "single",
+        "text": "Para transmitir online debemos...",
+        "correct": [
+          2
+        ],
+        "explanation": "Respuesta correcta: Tener acceso a un servidor de streaming y el hardware necesario para la emisión (cámaras, archivos multimedia, etc.).",
+        "options": [
+          "Tener un servidor en el mismo lugar de la emisión.",
+          "Debemos tener un equipo con acceso a Internet.",
+          "Tener acceso a un servidor de streaming y el hardware necesario para la emisión (cámaras, archivos multimedia, etc.).",
+          "Ninguna respuesta es correcta."
+        ]
+      }
+    ]
+  }
+];
+const GLOBAL_QUIZ_SIZE = 20;
+let currentModuleId=null, currentQuestions=[], currentIndex=0, selected=[], answered=false, correctCount=0, incorrect=[];
+const $=id=>document.getElementById(id);
+function shuffle(a){const x=[...a]; for(let i=x.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [x[i],x[j]]=[x[j],x[i]];} return x;}
+function allQuestions(){return MODULES.flatMap(m=>m.questions.map(q=>({...q,moduleId:m.id,moduleName:m.name})));}
+function init(){ $('total-q').textContent=allQuestions().length; $('total-m').textContent=MODULES.length; const grid=$('modules-grid'); grid.innerHTML=''; MODULES.forEach(m=>{const c=document.createElement('div'); c.className='module-card'; c.onclick=()=>startQuiz(m.id); c.innerHTML=`<div class="module-id">${m.id}</div><div class="module-name">${m.name}</div><div class="module-meta"><span><i>${m.questions.length}</i> preguntas</span></div>`; grid.appendChild(c);}); }
+function startQuiz(moduleId, customQuestions=null, label=null){ currentModuleId=moduleId; let pool; if(customQuestions) pool=customQuestions; else if(moduleId==='ALL') pool=shuffle(allQuestions()).slice(0, Math.min(GLOBAL_QUIZ_SIZE, allQuestions().length)); else {const m=MODULES.find(x=>x.id===moduleId); pool=shuffle(m.questions.map(q=>({...q,moduleId:m.id,moduleName:m.name})));} currentQuestions=pool; currentIndex=0; selected=[]; answered=false; correctCount=0; incorrect=[]; $('screen-home').style.display='none'; $('screen-results').style.display='none'; $('screen-quiz').style.display='block'; $('quiz-module-label').textContent=label || (moduleId==='ALL'?'Test global':MODULES.find(m=>m.id===moduleId).name); renderQuestion(); window.scrollTo(0,0); }
+function typeLabel(t){return t==='multi'?'Respuesta múltiple':t==='tf'?'Verdadero/Falso':t==='fill'?'Completar':'Respuesta única';}
+function renderQuestion(){const q=currentQuestions[currentIndex]; selected=[]; answered=false; $('q-counter').textContent=`Pregunta ${currentIndex+1} de ${currentQuestions.length}`; const badge=$('q-type-badge'); badge.textContent=typeLabel(q.type); badge.className='q-type-badge type-'+(q.type==='multi'?'multi':q.type==='tf'?'tf':q.type==='fill'?'fill':'single'); $('q-text').textContent=q.text; $('options-list').innerHTML=''; $('feedback-box').style.display='none'; $('btn-confirm').style.display='inline-block'; $('btn-next').style.display='none'; $('btn-skip').style.display='inline-block'; $('progress-fill').style.width=`${(currentIndex/currentQuestions.length)*100}%`; $('quiz-score-badge').innerHTML=`<b>${correctCount}</b> / ${currentIndex}`; if(q.type==='fill'){$('fill-wrap').style.display='block'; const inp=$('fill-input'); inp.value=''; inp.disabled=false; inp.className='fill-input'; setTimeout(()=>inp.focus(),100); inp.onkeydown=e=>{if(e.key==='Enter') confirmAnswer();};} else {$('fill-wrap').style.display='none'; q.options.forEach((opt,i)=>{const li=document.createElement('li'); li.className='option-item'; li.onclick=()=>toggleOption(i,li,q.type); li.innerHTML=`<span class="option-letter">${String.fromCharCode(97+i)}.</span><span>${opt}</span>`; $('options-list').appendChild(li);});} }
+function toggleOption(i,el,type){ if(answered) return; if(type==='multi'){ if(selected.includes(i)){selected=selected.filter(x=>x!==i); el.classList.remove('selected');} else {selected.push(i); el.classList.add('selected');} } else { selected=[i]; document.querySelectorAll('.option-item').forEach(x=>x.classList.remove('selected')); el.classList.add('selected'); } }
+function norm(v){return String(v).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[.`'"“”]/g,'').replace(/\s+/g,' ').trim();}
+function confirmAnswer(){ if(answered) return; const q=currentQuestions[currentIndex]; let ok=false, user=''; if(q.type==='fill'){const val=$('fill-input').value; user=val||'Sin respuesta'; ok=(q.correct||[]).some(a=>norm(a)===norm(val)); $('fill-input').disabled=true; $('fill-input').classList.add(ok?'correct':'incorrect'); } else { if(selected.length===0) return; const s=[...selected].sort((a,b)=>a-b).join(','); const c=[...(q.correct||[])].sort((a,b)=>a-b).join(','); ok=s===c; user=selected.map(i=>q.options[i]).join(' | '); document.querySelectorAll('.option-item').forEach((el,i)=>{el.classList.add('disabled'); if(q.correct.includes(i)) el.classList.add('show-correct'); if(selected.includes(i) && !q.correct.includes(i)) el.classList.add('incorrect'); if(selected.includes(i) && q.correct.includes(i)) el.classList.add('correct');}); } answered=true; const fb=$('feedback-box'); fb.style.display='block'; fb.className='feedback-box '+(ok?'correct-fb':'incorrect-fb'); $('feedback-label').textContent=ok?'Correcto':'Incorrecto'; $('feedback-text').textContent=q.explanation || ('Respuesta correcta: '+(q.type==='fill'?q.correct.join(' / '):q.correct.map(i=>q.options[i]).join(' / '))); if(ok) correctCount++; else incorrect.push({q,user}); $('btn-confirm').style.display='none'; $('btn-next').style.display='inline-block'; $('btn-skip').style.display='none'; $('quiz-score-badge').innerHTML=`<b>${correctCount}</b> / ${currentIndex+1}`; }
+function skipQuestion(){ incorrect.push({q:currentQuestions[currentIndex],user:'Omitida'}); nextQuestion(); }
+function nextQuestion(){ if(currentIndex<currentQuestions.length-1){currentIndex++; renderQuestion(); window.scrollTo(0,0);} else showResults(); }
+function showResults(){ $('screen-quiz').style.display='none'; $('screen-results').style.display='block'; const total=currentQuestions.length, pct=Math.round((correctCount/total)*100); $('res-score-big').textContent=pct+'%'; $('res-module-name').textContent=$('quiz-module-label').textContent; $('res-correct').textContent=correctCount; $('res-incorrect').textContent=total-correctCount; $('res-total').textContent=total; $('progress-fill').style.width='100%'; const review=$('review-section'); review.innerHTML=''; if(incorrect.length){review.innerHTML='<div class="review-title">Preguntas falladas u omitidas</div>'; incorrect.forEach(item=>{const q=item.q; const correct=q.type==='fill'?q.correct.join(' / '):q.correct.map(i=>q.options[i]).join(' / '); const div=document.createElement('div'); div.className='review-item'; div.innerHTML=`<p class="review-q">${q.text}</p><div class="review-answer-row"><span class="review-lbl">Tu respuesta</span><span class="review-your">${item.user}</span></div><div class="review-answer-row"><span class="review-lbl">Correcta</span><span class="review-correct">${correct}</span></div>`; review.appendChild(div);}); $('btn-review-incorrect').style.display='inline-block';} else {$('btn-review-incorrect').style.display='none';} window.scrollTo(0,0); }
+function retryIncorrect(){ if(!incorrect.length) return; startQuiz(currentModuleId, incorrect.map(x=>x.q), 'Repaso de fallos'); }
+function repeatQuiz(){ startQuiz(currentModuleId==='ALL'?'ALL':currentModuleId); }
+function goHome(){ $('screen-results').style.display='none'; $('screen-quiz').style.display='none'; $('screen-home').style.display='block'; window.scrollTo(0,0); }
+function exitQuiz(){ $('screen-quiz').style.display='none'; $('screen-home').style.display='block'; window.scrollTo(0,0); }
+init();
+</script>
+</body>
+</html>
